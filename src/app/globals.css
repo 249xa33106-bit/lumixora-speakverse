@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600&display=swap');
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  --sv-bg: #F7F9FC;
+  --sv-surface: #FFFFFF;
+  --sv-text: #17243A;
+  --sv-text-secondary: #596579;
+  --sv-primary: #2458A6;
+  --sv-primary-hover: #1a4280;
+  --sv-accent: #167D72;
+  --sv-border: #DFE5EE;
+  --sv-success: #18765A;
+  --sv-warning: #9A6216;
+  --sv-error: #B42332;
+  --sv-radius: 12px;
+  --sv-radius-lg: 16px;
+  --sv-control-height: 44px;
+}
+
+@theme {
+  --color-sv-bg: #F7F9FC;
+  --color-sv-surface: #FFFFFF;
+  --color-sv-text: #17243A;
+  --color-sv-text-secondary: #596579;
+  --color-sv-primary: #2458A6;
+  --color-sv-primary-hover: #1a4280;
+  --color-sv-accent: #167D72;
+  --color-sv-border: #DFE5EE;
+  --color-sv-success: #18765A;
+  --color-sv-warning: #9A6216;
+  --color-sv-error: #B42332;
+  --color-sv-teal: #167D72;
+  --color-sv-amber: #9A6216;
+  --color-sv-correct: #18765A;
+  --color-sv-incorrect: #B42332;
+  --color-sv-hint: #9A6216;
+  --color-sv-info: #2458A6;
+  --radius-sv: 12px;
+  --radius-sv-lg: 16px;
+  --shadow-sv-card: 0 1px 3px 0 rgba(23,36,58,0.08), 0 1px 2px -1px rgba(23,36,58,0.04);
+  --shadow-sv-card-hover: 0 4px 6px -1px rgba(23,36,58,0.10), 0 2px 4px -2px rgba(23,36,58,0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', 'Noto Sans Telugu', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--sv-bg);
+  color: var(--sv-text);
+  line-height: 1.6;
+}
+
+/* Focus indicators - WCAG 2.2 AA */
+:focus-visible {
+  outline: 2px solid var(--sv-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Telugu script support */
+.telugu-text {
+  font-family: 'Noto Sans Telugu', sans-serif;
+  line-height: 1.8;
+}
+
+/* Recording indicator animation */
+@keyframes pulse-record {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.recording-pulse {
+  animation: pulse-record 1.5s ease-in-out infinite;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Skill tree connector lines */
+.skill-tree-connector {
+  position: relative;
+}
+.skill-tree-connector::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  width: 2px;
+  height: 24px;
+  background-color: var(--sv-border);
+  transform: translateX(-50%);
+}
+
+/* Score color - always with text label, never color alone */
+.score-excellent { color: var(--sv-success); }
+.score-good { color: var(--sv-primary); }
+.score-fair { color: var(--sv-warning); }
+.score-needs-work { color: var(--sv-error); }
