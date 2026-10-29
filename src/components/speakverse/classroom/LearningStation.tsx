@@ -1,7 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
 import type { Mesh } from 'three'
 import type { StationId } from './ClassroomScene'
 
@@ -15,109 +14,67 @@ interface LearningStationProps {
   onClick: () => void
 }
 
-export function LearningStation({ id, position, label, color, emoji, isActive, onClick }: LearningStationProps) {
+export function LearningStation({ position, color, isActive, onClick }: LearningStationProps) {
   const meshRef = useRef<Mesh>(null)
   const [hovered, setHovered] = useState(false)
-  const [focused, setFocused] = useState(false)
 
-  // Gentle bob animation
+  // Smooth bob animation with capped frame rates
   useFrame((state) => {
     if (!meshRef.current) return
     const t = state.clock.elapsedTime
-    meshRef.current.position.y = Math.sin(t * 1.2 + position[0]) * 0.08 + 0.6
-    if (isActive || hovered || focused) {
-      meshRef.current.rotation.y += 0.01
+    meshRef.current.position.y = Math.sin(t * 1.5 + position[0]) * 0.08 + 0.65
+    if (isActive || hovered) {
+      meshRef.current.rotation.y += 0.02
     }
   })
-
-  const cleanLabel = label.replace('\n', ' ')
 
   return (
     <group
       position={position}
-      onClick={(e) => { e.stopPropagation(); onClick() }}
-      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto' }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+      onPointerOver={() => {
+        setHovered(true)
+        if (typeof document !== 'undefined') document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        setHovered(false)
+        if (typeof document !== 'undefined') document.body.style.cursor = 'auto'
+      }}
     >
+      {/* Base platform */}
+      <mesh position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.55, 0.6, 0.05, 16]} />
+        <meshStandardMaterial color={isActive ? color : '#CBD5E1'} roughness={0.6} />
+      </mesh>
+
       {/* Station pillar */}
-      <mesh castShadow receiveShadow position={[0, 0.4, 0]}>
-        <cylinderGeometry args={[0.08, 0.1, 0.8, 8]} />
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+      <mesh position={[0, 0.35, 0]}>
+        <cylinderGeometry args={[0.07, 0.09, 0.7, 12]} />
+        <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
       </mesh>
 
       {/* Station orb */}
-      <mesh ref={meshRef} castShadow position={[0, 0.6, 0]}>
-        <sphereGeometry args={[0.35, 24, 24]} />
+      <mesh ref={meshRef} position={[0, 0.65, 0]}>
+        <sphereGeometry args={[0.32, 18, 18]} />
         <meshStandardMaterial
           color={isActive ? '#FFFFFF' : color}
           emissive={color}
-          emissiveIntensity={isActive ? 0.9 : (hovered || focused) ? 0.6 : 0.25}
+          emissiveIntensity={isActive ? 1.0 : hovered ? 0.7 : 0.3}
           roughness={0.2}
-          metalness={0.4}
+          metalness={0.3}
         />
       </mesh>
 
-      {/* Interactive label with full keyboard and screen reader accessibility */}
-      <Html
-        position={[0, 1.25, 0]}
-        center
-        distanceFactor={8}
-        occlude
-      >
-        <button
-          type="button"
-          tabIndex={0}
-          role="button"
-          aria-label={`${cleanLabel} station. Press Enter to select.`}
-          aria-pressed={isActive}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              e.stopPropagation()
-              onClick()
-            }
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onClick()
-          }}
-          style={{
-            background: isActive ? color : 'rgba(255, 255, 255, 0.96)',
-            color: isActive ? '#FFFFFF' : '#17243A',
-            border: `2px solid ${focused ? '#000000' : color}`,
-            outline: focused ? `3px solid ${color}` : 'none',
-            outlineOffset: '2px',
-            borderRadius: '10px',
-            padding: '6px 12px',
-            fontSize: '12px',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            fontWeight: 600,
-            whiteSpace: 'pre-line',
-            textAlign: 'center',
-            cursor: 'pointer',
-            userSelect: 'none',
-            boxShadow: isActive
-              ? `0 0 18px ${color}88`
-              : focused
-              ? `0 0 12px ${color}66`
-              : '0 2px 8px rgba(0,0,0,0.12)',
-            transform: hovered || focused ? 'scale(1.05)' : 'scale(1)',
-            transition: 'all 0.2s ease',
-            minWidth: '95px',
-          }}
-        >
-          <div style={{ fontSize: '20px', marginBottom: '2px' }} aria-hidden="true">{emoji}</div>
-          {label}
-        </button>
-      </Html>
-
-      {/* Base platform */}
-      <mesh receiveShadow position={[0, 0.02, 0]}>
-        <cylinderGeometry args={[0.5, 0.55, 0.04, 16]} />
-        <meshStandardMaterial color={isActive ? color : '#DFE5EE'} roughness={0.8} />
-      </mesh>
+      {/* Pulsing ring indicator */}
+      {isActive && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+          <ringGeometry args={[0.65, 0.75, 24]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
     </group>
   )
 }

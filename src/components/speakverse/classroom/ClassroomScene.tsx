@@ -1,7 +1,7 @@
 'use client'
 import { Suspense, Component, ErrorInfo, ReactNode } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { ClassroomRoom } from './ClassroomRoom'
 import { LearningStation } from './LearningStation'
 
@@ -12,31 +12,28 @@ interface ClassroomSceneProps {
   activeStation: StationId | null
 }
 
-// Station positions in the 3D world
-const STATIONS: Array<{
+export const STATIONS: Array<{
   id: StationId
   position: [number, number, number]
   label: string
   color: string
   emoji: string
 }> = [
-  { id: 'grammar',      position: [-4, 0, -3], label: 'Grammar &\nVocabulary',  color: '#2458A6', emoji: '📚' },
-  { id: 'conversation', position: [0,  0, -3], label: 'Conversation\nCorner',    color: '#167D72', emoji: '💬' },
-  { id: 'interview',    position: [4,  0, -3], label: 'Interview\nRoom',         color: '#7C3AED', emoji: '🎯' },
-  { id: 'presentation', position: [-2, 0,  2], label: 'Presentation\nStage',     color: '#9A6216', emoji: '🎤' },
-  { id: 'listening',    position: [2,  0,  2], label: 'Listening\nStation',      color: '#18765A', emoji: '🎧' },
+  { id: 'grammar',      position: [-4, 0, -3], label: 'Grammar & Vocab',  color: '#2563EB', emoji: '📚' },
+  { id: 'conversation', position: [0,  0, -3], label: 'Conversation',     color: '#0D9488', emoji: '💬' },
+  { id: 'interview',    position: [4,  0, -3], label: 'Interview Room',   color: '#7C3AED', emoji: '🎯' },
+  { id: 'presentation', position: [-2, 0,  2], label: 'Presentation',     color: '#D97706', emoji: '🎤' },
+  { id: 'listening',    position: [2,  0,  2], label: 'Listening Lab',    color: '#059669', emoji: '🎧' },
 ]
 
-// ── Error Boundary so any Three.js error falls back gracefully ──────────────
-interface EBState { hasError: boolean; error?: string }
-class CanvasErrorBoundary extends Component<{ children: ReactNode; onError: (msg: string) => void }, EBState> {
+interface EBState { hasError: boolean }
+class CanvasErrorBoundary extends Component<{ children: ReactNode }, EBState> {
   state: EBState = { hasError: false }
-  static getDerivedStateFromError(e: Error): EBState {
-    return { hasError: true, error: e.message }
+  static getDerivedStateFromError(): EBState {
+    return { hasError: true }
   }
   componentDidCatch(e: Error, info: ErrorInfo) {
-    console.error('[ClassroomScene] Three.js error:', e, info)
-    this.props.onError(e.message)
+    console.warn('[ClassroomScene] Three.js rendered fallback:', e.message, info)
   }
   render() {
     if (this.state.hasError) return null
@@ -44,84 +41,49 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode; onError: (msg
   }
 }
 
-// ── Board sign rendered as HTML-in-3D (avoids troika font worker issues) ────
 function FrontBoard() {
   return (
-    <group position={[0, 2, -5.8]}>
-      {/* Board backing */}
-      <mesh receiveShadow>
-        <boxGeometry args={[8, 2.5, 0.1]} />
-        <meshStandardMaterial color="#1E3A5F" roughness={0.8} />
+    <group position={[0, 2.2, -5.8]}>
+      {/* Board backing frame */}
+      <mesh>
+        <boxGeometry args={[8.2, 2.6, 0.08]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} />
       </mesh>
-      {/* HTML overlay — no font worker needed */}
-      <Html
-        position={[0, 0, 0.12]}
-        center
-        distanceFactor={10}
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
-      >
-        <div style={{
-          textAlign: 'center',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          lineHeight: 1.3,
-          width: '280px',
-        }}>
-          <div style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 700 }}>
-            SpeakVerse™ — English Learning Lab
-          </div>
-          <div style={{ color: '#A0C4FF', fontSize: '10px', marginTop: '4px' }}>
-            Click a glowing station below to begin
-          </div>
-        </div>
-      </Html>
+      {/* Board surface */}
+      <mesh position={[0, 0, 0.05]}>
+        <planeGeometry args={[8, 2.4]} />
+        <meshStandardMaterial color="#0F172A" roughness={0.4} />
+      </mesh>
     </group>
   )
 }
 
-// ── Main classroom canvas ───────────────────────────────────────────────────
 function ClassroomCanvas({ onStationClick, activeStation }: ClassroomSceneProps) {
   return (
     <Canvas
-      shadows
-      dpr={[1, 1.5]}
+      dpr={[1, 1.25]}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-      style={{ background: '#EEF2F8' }}
-      onCreated={({ gl }) => {
-        // Handle WebGL context loss gracefully
-        gl.domElement.addEventListener('webglcontextlost', (e) => {
-          e.preventDefault()
-          console.warn('[ClassroomScene] WebGL context lost')
-        })
-      }}
+      style={{ background: '#0F172A' }}
     >
       <Suspense fallback={null}>
-        <PerspectiveCamera makeDefault position={[0, 5, 9]} fov={55} />
+        <PerspectiveCamera makeDefault position={[0, 4.5, 8.5]} fov={55} />
         <OrbitControls
           target={[0, 0, 0]}
           maxPolarAngle={Math.PI / 2.2}
           minDistance={5}
-          maxDistance={16}
+          maxDistance={15}
           enablePan={false}
         />
 
-        {/* Lighting — natural, soft, classroom feel */}
-        <ambientLight intensity={0.7} />
-        <directionalLight
-          position={[5, 10, 5]}
-          intensity={1.2}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-          shadow-camera-far={30}
-        />
+        {/* Optimized lighting - no heavy shadows */}
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[5, 10, 5]} intensity={1.0} />
         <directionalLight position={[-5, 8, -5]} intensity={0.4} />
-        {/* Window light simulation */}
-        <pointLight position={[-8, 4, 0]} intensity={0.5} color="#FFF9F0" />
-        <pointLight position={[8, 4, 0]}  intensity={0.5} color="#FFF9F0" />
 
-        {/* Classroom structure */}
+        {/* Classroom 3D geometry */}
         <ClassroomRoom />
 
-        {/* Interactive learning stations */}
+        {/* Fast GPU Learning Stations */}
         {STATIONS.map((station) => (
           <LearningStation
             key={station.id}
@@ -131,28 +93,44 @@ function ClassroomCanvas({ onStationClick, activeStation }: ClassroomSceneProps)
           />
         ))}
 
-        {/* Front board — HTML overlay, no troika font worker */}
+        {/* Front Board */}
         <FrontBoard />
       </Suspense>
     </Canvas>
   )
 }
 
-// ── Public export — wrapped in Error Boundary ───────────────────────────────
 export function ClassroomScene({ onStationClick, activeStation }: ClassroomSceneProps) {
-  function handleError(msg: string) {
-    console.error('[ClassroomScene] Falling back due to:', msg)
-  }
-
   return (
     <div
-      className="w-full h-full"
+      className="w-full h-full relative"
       role="application"
-      aria-label="3D interactive classroom — use Tab to navigate stations, Enter to select"
+      aria-label="3D interactive classroom"
     >
-      <CanvasErrorBoundary onError={handleError}>
+      <CanvasErrorBoundary>
         <ClassroomCanvas onStationClick={onStationClick} activeStation={activeStation} />
       </CanvasErrorBoundary>
+
+      {/* Lightweight, zero-lag 2D interactive HUD Station Selector on top of 3D Canvas */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#090d1a]/85 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 shadow-2xl overflow-x-auto max-w-[95vw]">
+        {STATIONS.map((s) => {
+          const isSel = activeStation === s.id
+          return (
+            <button
+              key={s.id}
+              onClick={() => onStationClick(s.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                isSel
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'bg-white/5 hover:bg-white/10 text-gray-300'
+              }`}
+            >
+              <span>{s.emoji}</span>
+              <span>{s.label}</span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
